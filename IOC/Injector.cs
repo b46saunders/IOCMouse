@@ -81,7 +81,7 @@ namespace IOC
                     if (binding == null)
                     {
                         throw new Exception(
-                            $"Unable to set binding for [{typeof(TInterface).FullName}] to {typeof(TBinding).FullName} because parameter number {i + 1} of type {parameters[i].ParameterType} has not been bound yet.");
+                            $"Unable to set binding for [{_resolveType.FullName}] to {_interfaceType.FullName} because parameter number {i + 1} of type {parameters[i].ParameterType} has not been bound yet.");
                     }
                     args.Add(binding);
 
