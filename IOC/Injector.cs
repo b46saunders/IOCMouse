@@ -11,14 +11,18 @@ namespace IOC
     public class InterfaceBinding
     {
         private readonly Func<object> _bindingFunction;
+        private readonly Type _resolveType;
+        private readonly Type _interfaceType;
         private Dictionary<string,IObjectResolver> _constructorArguments = new Dictionary<string, IObjectResolver>();
 
         private bool _singletonScope;
 
         private object _singletonObject;
 
-        public InterfaceBinding()
+        public InterfaceBinding(Type interfaceType,Type resolveType)
         {
+            _interfaceType = interfaceType;
+            _resolveType = resolveType;
         }
 
         public object ResolveBinding<T>()
@@ -55,11 +59,11 @@ namespace IOC
             return this;
         }
 
-        public void c()
+        public void BuildBinding()
         {
-            Console.WriteLine($"Binding [{typeof(TInterface).Name}] to [{typeof(TBinding).Name}]");
+            Console.WriteLine($"Building binding [{_interfaceType.Name}] to [{_resolveType.Name}]");
             //only handle 1 constructor
-            var constructor = typeof(TBinding).GetConstructors().First();
+            var constructor = _resolveType.GetConstructors().First();
 
             //each parameter should be an interface if we are trying to resolve down the tree
             //when we see a parameter that is not an interface we need to handle resolution in some way
@@ -103,14 +107,11 @@ namespace IOC
 
         public static InterfaceBinding Bind<TInterface, TBinding>() where TBinding : TInterface
         {
-            InterfaceBinding createdBinding = new InterfaceBinding();
+            InterfaceBinding createdBinding = new InterfaceBinding(typeof(TInterface),typeof(TBinding));
             if (!_bindings.TryAdd(typeof(TInterface).GetHashCode(), createdBinding))
             {
                 throw new Exception($"A binding for {typeof(TInterface).FullName} has already been set to {typeof(TBinding).FullName}");
             }
-
-
-
             return createdBinding;
         }
 
