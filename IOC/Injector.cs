@@ -11,8 +11,7 @@ namespace IOC
     
     public static class Injector
     {
-        private static ConcurrentDictionary<Type, InterfaceBinding> _bindings = new ConcurrentDictionary<Type, InterfaceBinding>();
-        public static IReadOnlyDictionary<Type, InterfaceBinding> Bindings => new Dictionary<Type, InterfaceBinding>(_bindings); 
+        private static ConcurrentDictionary<Type, InterfaceBinding> _bindings = new ConcurrentDictionary<Type, InterfaceBinding>(); 
 
 
         public static InterfaceBinding Bind<TInterface, TBinding>() where TBinding : TInterface
@@ -44,7 +43,6 @@ namespace IOC
             private readonly Type _resolveType;
             private readonly Type _interfaceType;
             private Dictionary<string, Func<object>> _constructorArguments = new Dictionary<string, Func<object>>();
-
             private bool _singletonScope;
 
             private object _singletonObject;
@@ -53,6 +51,7 @@ namespace IOC
             {
                 _interfaceType = interfaceType;
                 _resolveType = resolveType;
+                
             }
 
             public object ResolveBinding<T>()

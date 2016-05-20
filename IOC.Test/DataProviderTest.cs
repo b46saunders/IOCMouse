@@ -9,8 +9,9 @@ namespace IOC.Test
         [TestMethod]
         public void ResolveInjection()
         {
-            Injector.Bind<IClock, Clock>();
+            
             Injector.Bind<ILogger, Logger>().InSingletonScope();
+            Injector.Bind<IClock, Clock>();
             Injector.Bind<IDataProvider, DataProvider>().InSingletonScope();
             Injector.Bind<IConsumer, SomeConsumer>().InSingletonScope();
             Injector.Bind<INonInterfaceConstructor, ClassWithANonInterfaceConstructor>()
