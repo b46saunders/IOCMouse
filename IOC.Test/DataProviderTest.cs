@@ -13,7 +13,9 @@ namespace IOC.Test
             Injector.Bind<ILogger, Logger>().InSingletonScope();
             Injector.Bind<IDataProvider, DataProvider>().InSingletonScope();
             Injector.Bind<IConsumer, SomeConsumer>().InSingletonScope();
-            Injector.Bind<INonInterfaceConstructor, ClassWithANonInterfaceConstructor>();
+            Injector.Bind<INonInterfaceConstructor, ClassWithANonInterfaceConstructor>()
+                .InSingletonScope()
+                .WithConstructorArguments("someNumber",10);
 
             var c = new ConsumerConsumer(Injector.Resolve<IConsumer>());
 
