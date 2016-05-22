@@ -15,10 +15,11 @@ namespace IOC.Test
             Injector.Bind<IDataProvider, DataProvider>().InSingletonScope();
             Injector.Bind<IConsumer, SomeConsumer>().InSingletonScope();
             Injector.Bind<INonInterfaceConstructor, ClassWithANonInterfaceConstructor>()
-                .InSingletonScope()
-                .WithConstructorArguments("someNumber",10);
+                .WithConstructorArguments("someNumber", 10);
 
-            var c = new ConsumerConsumer(Injector.Resolve<IConsumer>());
+            var consumerConsumer = new ConsumerConsumer(Injector.Resolve<IConsumer>());
+            var test2 = Injector.Resolve<INonInterfaceConstructor>();
+
 
             //Injector.Bind<IClock, Clock>();
 

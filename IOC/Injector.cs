@@ -13,7 +13,6 @@ namespace IOC
     {
         private static ConcurrentDictionary<Type, InterfaceBinding> _bindings = new ConcurrentDictionary<Type, InterfaceBinding>(); 
 
-
         public static InterfaceBinding Bind<TInterface, TBinding>() where TBinding : TInterface
         {
             InterfaceBinding createdBinding = new InterfaceBinding(typeof(TInterface),typeof(TBinding));
@@ -44,6 +43,7 @@ namespace IOC
             private readonly Type _interfaceType;
             private Dictionary<string, Func<object>> _constructorArguments = new Dictionary<string, Func<object>>();
             private bool _singletonScope;
+            private bool _bindingSet;
 
             private object _singletonObject;
 
@@ -51,11 +51,15 @@ namespace IOC
             {
                 _interfaceType = interfaceType;
                 _resolveType = resolveType;
-                
+                _bindingSet = false;
             }
 
             public object ResolveBinding<T>()
             {
+                if (!_bindingSet)
+                {
+                    InternalResolve();
+                }
                 if (!_singletonScope)
                 {
                     Console.WriteLine($"Newing up a [{typeof(T).Name}]");
@@ -68,6 +72,7 @@ namespace IOC
                 }
                 Console.WriteLine($"Fetching Singleton of [{typeof(T).Name}] - Hash({_singletonObject.GetHashCode()})");
                 return _singletonObject;
+
             }
 
             public InterfaceBinding InSingletonScope(bool singleton = true)
@@ -89,7 +94,7 @@ namespace IOC
                 return this;
             }
 
-            public void BuildBinding()
+            public void InternalResolve()
             {
                 Console.WriteLine($"Building binding [{_interfaceType.Name}] to [{_resolveType.Name}]");
                 //get constructor with most parameters
@@ -122,12 +127,13 @@ namespace IOC
                         if (resolvedParameter == null)
                         {
                             throw new ArgumentNullException(
-                                $"Could resolve parameter: {parameters[i].Name} for type: {_resolveType.FullName} when trying to bind: {_interfaceType.FullName}");
+                                $"Could resolve parameter: {parameters[i].Name} for type: {_resolveType.FullName} when trying to resolve: {_interfaceType.FullName}. Try providing constructor arguments when binding type: {_interfaceType.FullName}");
                         }
                         args.Add(resolvedParameter);
                     }
                 }
                 _bindingFunction = () => constructor.Invoke(args.ToArray());
+                _bindingSet = true;
             }
 
             private object GetConstructorParameter(ParameterInfo parameterInfo)
