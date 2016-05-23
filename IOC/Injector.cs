@@ -15,14 +15,26 @@ namespace IOC
 
         public static InterfaceBinding Bind<TInterface, TBinding>() where TBinding : TInterface
         {
-            InterfaceBinding createdBinding = new InterfaceBinding(typeof(TInterface),typeof(TBinding));
-            if (!_bindings.TryAdd(typeof(TInterface), createdBinding))
-            {
-                throw new Exception($"A binding for {typeof(TInterface).FullName} has already been set to {typeof(TBinding).FullName}");
-            }
+            var createdBinding = new InterfaceBinding(typeof(TInterface),typeof(TBinding));
+            TryAddBinding<TInterface,TBinding>(createdBinding);
             return createdBinding;
         }
 
+        public static InterfaceBinding Bind<TInterface,TBinding>(TBinding instance) where TBinding : TInterface
+        {
+            var binding = new InterfaceBinding(typeof (TInterface), typeof (TBinding), () => instance);
+            TryAddBinding<TInterface, TBinding>(binding);
+            Console.WriteLine($"Adding instance binding for type: {typeof(TInterface).FullName}");
+            return binding;
+        }
+
+        private static void TryAddBinding<TInterface, TBinding>(InterfaceBinding binding)
+        {
+            if (!_bindings.TryAdd(typeof(TInterface), binding))
+            {
+                throw new Exception($"A binding for {typeof(TInterface).FullName} has already been set to {typeof(TBinding).FullName}");
+            }
+        }
 
         public static T Resolve<T>()
         {
@@ -52,6 +64,15 @@ namespace IOC
                 _interfaceType = interfaceType;
                 _resolveType = resolveType;
                 _bindingSet = false;
+            }
+
+            public InterfaceBinding(Type interfaceType, Type resolveType,Func<object> instance)
+            {
+                _interfaceType = interfaceType;
+                _resolveType = resolveType;
+                _bindingSet = true;
+                _singletonScope = true;
+                _bindingFunction = instance;
             }
 
             public object ResolveBinding<T>()
