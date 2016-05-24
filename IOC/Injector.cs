@@ -20,7 +20,7 @@ namespace IOC
             return createdBinding;
         }
 
-        public static InterfaceBinding Bind<TInterface,TBinding>(TBinding instance) where TBinding : TInterface
+        public static InterfaceBinding Bind<TInterface,TBinding>(TInterface instance) where TBinding : TInterface
         {
             var binding = new InterfaceBinding(typeof (TInterface), typeof (TBinding), () => instance);
             TryAddBinding<TInterface, TBinding>(binding);
@@ -32,7 +32,7 @@ namespace IOC
         {
             if (!_bindings.TryAdd(typeof(TInterface), binding))
             {
-                throw new Exception($"A binding for {typeof(TInterface).FullName} has already been set to {typeof(TBinding).FullName}");
+                throw new InvalidOperationException($"A binding for {typeof(TInterface).FullName} has already been set to {typeof(TBinding).FullName}");
             }
         }
 
