@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 
@@ -11,7 +10,16 @@ namespace IOC
     
     public static class Injector
     {
-        private static ConcurrentDictionary<Type, InterfaceBinding> _bindings = new ConcurrentDictionary<Type, InterfaceBinding>(); 
+        public static bool LoggingEnabled = false;
+        private static ConcurrentDictionary<Type, InterfaceBinding> _bindings = new ConcurrentDictionary<Type, InterfaceBinding>();
+
+        private static void Log(string message)
+        {
+            if (LoggingEnabled)
+            {
+                Console.WriteLine(message);
+            }
+        }
 
         public static InterfaceBinding Bind<TInterface, TBinding>() where TBinding : TInterface
         {
@@ -24,7 +32,7 @@ namespace IOC
         {
             var binding = new InterfaceBinding(typeof (TInterface), typeof (TBinding), () => instance);
             TryAddBinding<TInterface, TBinding>(binding);
-            Console.WriteLine($"Adding instance binding for type: {typeof(TInterface).FullName}");
+            Log($"Adding instance binding for type: {typeof(TInterface).FullName}");
             return binding;
         }
 
@@ -83,7 +91,7 @@ namespace IOC
                 }
                 if (!_singletonScope)
                 {
-                    Console.WriteLine($"Newing up a [{typeof(T).Name}]");
+                    Log($"Newing up a [{typeof(T).Name}]");
                     return _bindingFunction.Invoke();
                 }
                 if (_singletonObject == null)
@@ -91,7 +99,7 @@ namespace IOC
                     _singletonObject = _bindingFunction.Invoke();
 
                 }
-                Console.WriteLine($"Fetching Singleton of [{typeof(T).Name}] - Hash({_singletonObject.GetHashCode()})");
+                Log($"Fetching Singleton of [{typeof(T).Name}] - Hash({_singletonObject.GetHashCode()})");
                 return _singletonObject;
 
             }
@@ -117,7 +125,7 @@ namespace IOC
 
             public void InternalResolve()
             {
-                Console.WriteLine($"Building binding [{_interfaceType.Name}] to [{_resolveType.Name}]");
+                Log($"Building binding [{_interfaceType.Name}] to [{_resolveType.Name}]");
                 //get constructor with most parameters
                 var constructor = _resolveType.GetConstructors().OrderByDescending(a => a.GetParameters().Length).First();
 
