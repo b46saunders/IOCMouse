@@ -6,8 +6,6 @@ using System.Reflection;
 
 namespace IOC
 {
-
-    
     public static class Injector
     {
         public static bool LoggingEnabled = false;
@@ -56,78 +54,77 @@ namespace IOC
             throw new Exception($"Failed to resolve type: {typeof(T).FullName}");
         }
 
-        public class InterfaceBinding
+        public sealed class InterfaceBinding
         {
-            private Func<object> _bindingFunction;
-            private readonly Type _resolveType;
-            private readonly Type _interfaceType;
-            private Dictionary<string, Func<object>> _constructorArguments = new Dictionary<string, Func<object>>();
-            private bool _singletonScope;
-            private bool _bindingSet;
-
-            private object _singletonObject;
+            private Func<object> bindingFunction;
+            private readonly Type resolveType;
+            private readonly Type interfaceType;
+            private readonly Dictionary<string, Func<object>> constructorArguments = new Dictionary<string, Func<object>>();
+            private bool singletonScope;
+            private bool bindingSet;
+            private object singletonObject;
 
             public InterfaceBinding(Type interfaceType, Type resolveType)
             {
-                _interfaceType = interfaceType;
-                _resolveType = resolveType;
-                _bindingSet = false;
+                this.interfaceType = interfaceType;
+                this.resolveType = resolveType;
+                bindingSet = false;
             }
 
             public InterfaceBinding(Type interfaceType, Type resolveType,Func<object> instance)
             {
-                _interfaceType = interfaceType;
-                _resolveType = resolveType;
-                _bindingSet = true;
-                _singletonScope = true;
-                _bindingFunction = instance;
+                this.interfaceType = interfaceType;
+                this.resolveType = resolveType;
+                bindingSet = true;
+                singletonScope = true;
+                bindingFunction = instance;
             }
 
             public object ResolveBinding<T>()
             {
-                if (!_bindingSet)
+                if (!bindingSet)
                 {
                     InternalResolve();
                 }
-                if (!_singletonScope)
+                if (!singletonScope)
                 {
                     Log($"Newing up a [{typeof(T).Name}]");
-                    return _bindingFunction.Invoke();
+                    return bindingFunction.Invoke();
                 }
-                if (_singletonObject == null)
+                if (singletonObject == null)
                 {
-                    _singletonObject = _bindingFunction.Invoke();
+                    singletonObject = bindingFunction.Invoke();
 
                 }
-                Log($"Fetching Singleton of [{typeof(T).Name}] - Hash({_singletonObject.GetHashCode()})");
-                return _singletonObject;
+                Log($"Fetching Singleton of [{typeof(T).Name}] - Hash({singletonObject.GetHashCode()})");
+                return singletonObject;
 
             }
 
             public InterfaceBinding InSingletonScope(bool singleton = true)
             {
-                _singletonScope = singleton;
+                singletonScope = singleton;
                 return this;
             }
-            public InterfaceBinding WithConstructorArguments(Dictionary<string, object> constructorArguments)
+            public InterfaceBinding WithConstructorArguments(Dictionary<string, object> constructorArgs)
             {
-                foreach (var constructorArgument in constructorArguments)
+                foreach (var constructorArgument in constructorArgs)
                 {
-                    _constructorArguments.Add(constructorArgument.Key, () => constructorArgument.Value);
+                    constructorArguments.Add(constructorArgument.Key, () => constructorArgument.Value);
                 }
                 return this;
             }
             public InterfaceBinding WithConstructorArguments(string name, object argument)
             {
-                _constructorArguments.Add(name, () => argument);
+                constructorArguments.Add(name, () => argument);
                 return this;
             }
 
             public void InternalResolve()
             {
-                Log($"Building binding [{_interfaceType.Name}] to [{_resolveType.Name}]");
+                Log($"Building binding [{interfaceType.Name}] to [{resolveType.Name}]");
                 //get constructor with most parameters
-                var constructor = _resolveType.GetConstructors().OrderByDescending(a => a.GetParameters().Length).First();
+                var constructor = resolveType.GetConstructors().OrderByDescending(a => a.GetParameters().Length).First();
 
                 //each parameter should be an interface if we are trying to resolve down the tree
                 //when we see a parameter that is not an interface we need to handle resolution in some way
@@ -145,7 +142,7 @@ namespace IOC
                         if (binding == null)
                         {
                             throw new Exception(
-                                $"Unable to set binding for [{_resolveType.FullName}] to {_interfaceType.FullName} because parameter number {i + 1} of type {parameters[i].ParameterType} has not been bound yet.");
+                                $"Unable to set binding for [{resolveType.FullName}] to {interfaceType.FullName} because parameter number {i + 1} of type {parameters[i].ParameterType} has not been bound yet.");
                         }
                         args.Add(binding);
 
@@ -156,19 +153,19 @@ namespace IOC
                         if (resolvedParameter == null)
                         {
                             throw new ArgumentNullException(
-                                $"Could resolve parameter: {parameters[i].Name} for type: {_resolveType.FullName} when trying to resolve: {_interfaceType.FullName}. Try providing constructor arguments when binding type: {_interfaceType.FullName}");
+                                $"Could resolve parameter: {parameters[i].Name} for type: {resolveType.FullName} when trying to resolve: {interfaceType.FullName}. Try providing constructor arguments when binding type: {interfaceType.FullName}");
                         }
                         args.Add(resolvedParameter);
                     }
                 }
-                _bindingFunction = () => constructor.Invoke(args.ToArray());
-                _bindingSet = true;
+                bindingFunction = () => constructor.Invoke(args.ToArray());
+                bindingSet = true;
             }
 
             private object GetConstructorParameter(ParameterInfo parameterInfo)
             {
                 Func<object> providedObjectOut;
-                if (_constructorArguments.TryGetValue(parameterInfo.Name, out providedObjectOut))
+                if (constructorArguments.TryGetValue(parameterInfo.Name, out providedObjectOut))
                 {
                     return providedObjectOut();
                 }
